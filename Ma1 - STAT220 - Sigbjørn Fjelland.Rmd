@@ -1,0 +1,65 @@
+---
+title: "Ma.1 STAT220 sigbjørn Fjelland"
+author: "Sigbjørn Fjelland"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\newpage
+Problem 1.8
+
+```{r}
+craps <- function(n){
+
+  result_vector <- c()
+  
+  for(i in 1:n){
+    D<-sample(1:6, size = 2, replace = T, prob = rep(1/6,6) )
+    result_vector <- c(result_vector, sum(D))
+  }
+ result_vector
+}
+
+game <- craps(1000)
+game_infrence <- density(game)
+
+#plots
+par(mfrow=c(1,2))
+plot(game_infrence, main = "Distribution of Craps")
+hist(game, breaks = 12, main = "Frequency of result")
+```
+\newpage
+```{r}
+print(game_infrence)
+```
+
+```{r}
+play_craps <- function(n){
+  count = 0
+  status = 0
+  d = sum(D)
+  while (count <= n && status == 20 && status == 30) {
+    count = count + 1
+    D<-sample(1:6, size = 2, replace = T, prob = rep(1/6,6))
+    
+    if(d %in% c(11,7)){
+      status = 20
+      print("winner")
+    }
+    if(d %in% c(2,3,12)){
+      status = 30
+      print("looser")
+    }
+    if(count == n){print("i give Up")}
+    
+  }
+  print(status)
+}
+
+play_craps(100)
+```
+

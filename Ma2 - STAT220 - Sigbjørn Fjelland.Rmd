@@ -1,0 +1,314 @@
+---
+title: "Ma2"
+author: "Sigbjørn Fjelland"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\underline{Various packages in use:}
+```{r}
+set.seed(98765432)
+library(igraph)
+library(expm) 
+```
+
+w -> wide
+t -> tilde
+h -> hat
+m -> matrix
+
+
+\newpage
+\underline{problem 2.1}\newline
+
+a)
+```{r}
+P <- matrix(nrow = 5, ncol = 5, dimnames = list(c("0","1","2","3","4"),
+                                                c("0","1","2","3","4")))
+P[1,] <- c(0.000, 0.000, 0.498, 0.000, 0.502)
+P[2,] <- c(0.000, 0.527, 0.366, 0.107, 0.000)
+P[3,] <- c(0.451, 0.549, 0.000, 0.000, 0.000)
+P[4,] <- c(0.000, 0.474, 0.114, 0.412, 0.000)
+P[5,] <- c(0.328, 0.249, 0.000, 0.000, 0.423)
+
+graph_P <- graph_from_adjacency_matrix(P, weighted=TRUE,diag=TRUE)
+plot(graph_P)
+```
+\newpage
+\underline{problem 2.1}\newline
+
+b)
+```{r}
+irreducibility <- function(P, M){
+            P.new <- P
+            for(i in 2:M){
+                Pk <- P %^% i
+                P.new <- P.new + Pk
+            }
+            
+            P.bar <- (1/M)*P.new
+            
+            if(all(P.bar > 0)){
+                print("Transition Matrix is Irreducible")
+              
+            }
+            else{
+                print("YTransition Matrix is Reducible")
+            }
+            
+}
+
+irreducibility(P,5)
+```
+\newpage
+\underline{problem 2.1}\newline
+
+c) 
+```{r}
+K = 50
+M = 5
+p0 <- as.vector(c(0.013, 0.214, 0.197, 0.375, 0.201))
+
+K <- 50
+pk <- matrix(nrow = K, ncol = M)
+for (i in 1:K) {
+    pk[i, ] <- p0 %*% (P%^%i)
+}
+
+
+plot(x = 1:K, y = pk[, 1], type = "l", col = 1, xlab = "t", ylab = "p",
+ylim = c(min(pk), max(pk)))
+
+lines(x = 1:K, y = pk[, 2], type = "l", col = 2)
+lines(x = 1:K, y = pk[, 3], type = "l", col = 3)
+lines(x = 1:K, y = pk[, 4], type = "l", col = 4)
+lines(x = 1:K, y = pk[, 5], type = "l", col = 5)
+
+
+```
+\newpage
+\underline{problem 2.1}\newline
+
+d)
+Stationary distribution by computing eigenvalues of P
+```{r}
+pi <- eigen(t(P))$vectors[,1]/sum(eigen(t(P))$vectors[,1])
+
+pi_confirm <- pi %*% P 
+
+print(pi_confirm - pi)
+```
+
+
+e)
+Stationary distribution by iterting 50 times: $\pi=\pi\cdot P^{50}$
+```{r}
+pi_converged <- p0 %*% (P%^%50)
+
+```
+
+
+As we see the difference is small
+```{r}
+print(pi-pi_converged)
+```
+
+\newpage
+\underline{problem 2.2}\newline
+a)
+function for simulating large samples
+```{r}
+simulMarkov<-function(p0,mP,n){
+M<-dim(mP)[1]
+X<-rep(0,n)
+X[1]<-sample(M,1,prob=p0)
+for(t in 2:n) X[t]<-sample(M,1,prob=mP[X[t-1],])
+return(X)
+}
+```
+
+
+```{r}
+n<-100
+X<-rep(0,n)
+X[1]<-sample(M,1,prob=p0)
+for(t in 2:n) X[t]<-sample(M,1,prob=P[X[t-1],])
+```
+
+\underline{problem 2.2}\newline
+b)
+
+
+```{r}
+plot(x = 1:n, y = X, main = "Simulation of markov Chain based on (P, p0)", 
+     xlab = "n (simulated timestep)", ylab = "X(t)", type = "S")
+```
+
+
+##problem 2.2
+\newline
+c)
+
+```{r}
+
+iz<-4
+S_all<-which(X==iz)
+Tn<-length(S_all)
+
+Tn
+
+
+```
+\underline{problem 2.2}\newline
+d)
+
+```{r}
+tau<-S_all[2:Tn]-S_all[1:(Tn-1)]
+
+plot(x = 1:n, y = X, main = "Simulation of markov Chain based on (P, p0)", 
+     xlab = "n (simulated timestep)", ylab = "X(t)", type = "S")
+
+abline(v = tau, col="red", lwd=3, lty=2)
+```
+
+\underline{problem 2.3}\newline
+a)
+
+
+```{r}
+#set.seed(1234)
+X.10000 <- simulMarkov(p0=p0, mP=P,n=10000)
+
+iz.10000 = 4 #X.10000[1]
+S_all<-which(X.10000 == iz.10000)
+
+Tn.10000<-length(S_all)
+
+Tn.10000
+```
+
+b)
+
+```{r}
+tau.10000<-S_all[2:Tn.10000]-S_all[1:(Tn.10000-1)]
+
+f_i0<-c(1:100)
+for(j in 1:100){
+f_i0[j]<-(1/10000)*length(which(tau.10000==j))
+}
+
+
+barplot(f_i0, xlab = "f_i0")
+```
+
+c)
+```{r}
+set.seed(123)
+i0 <- 4
+Tn.1 <- length(which(simulMarkov(p0 = p0, mP=P, n=10000) == i0))
+tau.1 <- S_all[2:Tn.1] - S_all[1:(Tn.1 - 1)]
+K <- 100 
+
+f_hat <- numeric(K)
+
+for (s in 1:K) {
+  
+    f_hat[s] <- length(which(tau.1 == s))
+  }
+
+  f_hat <- f_hat / (Tn.1 - 1)
+
+
+barplot(f_hat, xlab = "f_hat")
+```
+
+
+
+
+  i)
+```{r}
+mu_hat_i0 <- (1/(Tn.1-1))*sum(tau.1[-1]) #AKA tou_bar
+mu_hat_i0
+```
+
+ii)
+
+```{r}
+mu_tilde_i0 <- sum((1:K) * f_hat)
+mu_tilde_i0 
+```
+
+iii)
+
+```{r}
+pi_i0 <- pi_converged[i0]
+pi_i0
+```
+
+```{r}
+rbind("1 / pi_i0" = 1 / pi_i0,
+"mu_hat_i0" = mu_hat_i0,
+"mu_tilde_i0" = mu_tilde_i0)
+
+
+```
+
+d)
+
+```{r}
+
+n = 10000
+m = n -1
+X = simulMarkov(p0 = p0, mP=P, n=n)
+
+
+wtpi <- whpi <- numeric(5)
+    for(i in 1:5){
+          wtpi[i]<-m^(-1)*length((which(X==i)))
+    }
+
+wtpi
+sum(wtpi)
+
+```
+
+e)
+
+
+Emprircal Transition matrix:
+
+
+```{r}
+P_hat <- matrix(nrow = 5, ncol = 5, 0)
+wtpi <-c()
+whpi <-c()
+for (t in 1:(length(X) - 1)) P_hat[X[t], 
+              X[t + 1]] <- P_hat[X[t], X[t + 1]] + 1
+
+  for (i in 1:5) P_hat[i, ] <- P_hat[i, ] / sum(P_hat[i, ])
+  
+P_hat
+```
+
+\underline{problem 2.4}\newline
+
+we apply the amse matrix as in 2.3 (e)
+
+a)
+```{r}
+P_hat
+```
+
+comparing by subtracting $P$ from $\hat{P}$
+b)
+
+```{r}
+P-P_hat
+```
+as we see the difference is about two to thre decimals
+
+

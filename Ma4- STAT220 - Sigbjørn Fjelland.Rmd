@@ -1,0 +1,158 @@
+---
+title: "Ma4 - STAT220 - Sigbjørn Fjelland"
+author: "Sigbjørn Fjelland"
+date: "`r Sys.Date()`"
+output: pdf_document
+header-includes:
+   - \usepackage{bbm}
+   - \usepackage{amsfonts}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tinytex)
+library(igraph)
+library(expm)
+library(markovchain)
+library(diagram)
+library(pracma)
+
+set.seed(123)
+```
+
+
+\underline{Problem 4.1}
+
+a)
+
+
+```{r}
+set.seed(123)
+M = c(20,100,1000)
+lambda = 0.5
+
+T.20 <-rexp(M[1], rate = lambda)
+T.100 <-rexp(M[2], rate = lambda)
+T.1000 <-rexp(M[3], rate = lambda)
+
+S.20 <- cumsum(T.20)
+S.100 <- cumsum(T.100)
+S.1000 <- cumsum(T.1000)
+
+
+t.vector.20 <- seq(from = 0, to = S.20[length(S.20)]*1.10, by=0.1)
+t.vector.100 <- seq(from = 0, to = S.100[length(S.100)]*1.10, by=0.1)
+t.vector.1000 <- seq(from = 0, to = S.1000[length(S.1000)]*1.10, by=0.1)
+
+X.20 <- numeric(length(t.vector.20))
+X.100 <- numeric(length(t.vector.100))
+X.1000 <- numeric(length(t.vector.1000))
+
+for(t in 1:length(t.vector.20)){
+  X.20[t] <- length(which(S.20 <= t.vector.20[t]))
+}
+
+for(t in 1:length(t.vector.100)){
+  X.100[t] <- length(which(S.100 <= t.vector.100[t]))
+}
+
+for(t in 1:length(t.vector.1000)){
+  X.1000[t] <- length(which(S.1000 <= t.vector.1000[t]))
+}
+```
+\newpage
+
+```{r}
+plot(x=t.vector.20, X.20, type="l")
+```
+
+
+```{r}
+plot(x=t.vector.100, X.100, type="l")
+```
+\newpage
+```{r}
+plot(x=t.vector.1000, X.1000, type="l")
+```
+\newpage
+```{r}
+n = 1000
+
+mS <- matrix(nrow = n, ncol = 100)
+
+for(i in 1:n){
+mS[i,] <- cumsum(rexp(100, rate = 0.5))
+
+}
+t <- seq(from = 0, to = max(mS)*1.10, by=0.1)
+
+mX <- matrix(nrow = n, ncol = length(t))
+
+
+for(j in 1:n){
+  
+  for(k in 1:length(t)){
+    mX[j,k] <- length(which(mS[j,] <= t[k]))
+  }
+}
+```
+\newpage
+```{r}
+plot(x=t, mX[1,], type="l")
+for(i in 2:n){
+lines(x=t, mX[i,], type="l")
+}
+```
+
+\underline{Problem 4.2}
+
+a)
+
+```{r}
+time <- c(40,200,2000)
+
+X.s <- function(t, rate){
+        Z <- rpois(n =1, lambda = (rate*t))
+        U <- runif(Z)
+        X <-c()
+        for(s in 0:t){
+            X <- c(X, sum(which(t*U<=s)))
+        }
+        
+    return(X)
+}
+
+
+```
+
+```{r}
+plot(x = X.s(time[1], 0.5), type="l", xlab="t", ylab="X(s)", 
+     main="poisson process - rpoint up to 40")
+```
+```{r}
+plot(x = X.s(time[2], 0.5), type="l", xlab="t", ylab="X(s)", 
+     main="poisson process - rpoint up to 200")
+```
+```{r}
+plot(x = X.s(time[3], 0.5), type="l", xlab="t", ylab="X(s)", 
+     main="poisson process - rpoint up to 2000")
+```
+
+
+
+\newpage
+b)
+
+\begin{align*}
+N(a,b]=X(b)-X(a)\\
+\sum_{k=1}^{Z}1(tU_k\leq b)-\sum_{k=1}^{Z}1(tU_k\leq a)\\
+\sum_{k=1}^{Z}[1(tU_k\leq b)-1(tU_k\leq a)]\\
+\sum_{k=1}^{Z}1(a<tU_k\leq b)\\
+\sum_{k=1}^{Z}1(tU_k\in (a, b])
+\end{align*}
+\newpage
+c)
